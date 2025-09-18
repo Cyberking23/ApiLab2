@@ -1,4 +1,4 @@
 package org.example.apilab2.repository;
-
-public class ProgramaRepository {
-}
+import org.example.apilab2.repository.domain.Programa;
+import org.springframework.data.jpa.repository.JpaRepository;
+public interface ProgramaRepository extends JpaRepository<Programa, Long> {}
