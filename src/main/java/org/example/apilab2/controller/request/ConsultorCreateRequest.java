@@ -1,4 +1,8 @@
 package org.example.apilab2.controller.request;
+import jakarta.validation.constraints.NotBlank;
 
-public class ConsultorCreateRequest {
-}
+public record ConsultorCreateRequest(
+        @NotBlank String nombre,
+        @NotBlank String especializacion,
+        Boolean inActivoActualizado
+) {}
