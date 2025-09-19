@@ -3,6 +3,7 @@ package org.example.apilab2.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.apilab2.controller.request.ParticipanteCreateRequest;
+import org.example.apilab2.controller.response.ParticipanteResponse;
 import org.example.apilab2.repository.ParticipanteRepository;
 import org.example.apilab2.repository.domain.Participante;
 import org.example.apilab2.service.ParticipanteService;
@@ -32,12 +33,23 @@ public class ParticipanteController {
             @ApiResponse(responseCode = "201", description = "Participante creado"),
             @ApiResponse(responseCode = "400", description = "Datos inválidos")
     })
-    public Participante crear(@Valid @RequestBody ParticipanteCreateRequest req) {
-        return service.crear(req.nombre(), req.email(), req.genero(), req.nivelEducativo(), req.ingresoFormal());
+    public ParticipanteResponse crear(@Valid @RequestBody ParticipanteCreateRequest req) {
+        Participante p = service.crear(req.nombre(), req.email(), req.genero(), req.nivelEducativo(), req.ingresoFormal());
+        return toResponse(p);
     }
 
     @GetMapping
     @Operation(summary = "Listar participantes")
     @ApiResponses(@ApiResponse(responseCode = "200", description = "OK"))
-    public List<Participante> listar(){ return repo.findAll(); }
+    public List<ParticipanteResponse> listar(){
+        return repo.findAll().stream().map(this::toResponse).toList();
+    }
+
+    // ---- helpers ----
+    private ParticipanteResponse toResponse(Participante p) {
+        return new ParticipanteResponse(
+                p.getId(), p.getNombre(), p.getEmail(), p.getGenero(),
+                p.getNivelEducativo(), p.getIngresoFormal()
+        );
+    }
 }
