@@ -1,8 +1,13 @@
 package org.example.apilab2.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.example.apilab2.controller.response.EvaluacionResponse;
+import org.example.apilab2.controller.response.ParticipanteResponse;
+import org.example.apilab2.controller.response.ProgramaResponse;
 import org.example.apilab2.repository.EvaluacionRepository;
 import org.example.apilab2.repository.domain.Evaluacion;
+import org.example.apilab2.repository.domain.Participante;
+import org.example.apilab2.repository.domain.Programa;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,8 +30,8 @@ public class EvaluacionController {
     @GetMapping
     @Operation(summary = "Listar evaluaciones")
     @ApiResponses(@ApiResponse(responseCode = "200", description = "OK"))
-    public List<Evaluacion> listar() {
-        return repo.findAll();
+    public List<EvaluacionResponse> listar() {
+        return repo.findAll().stream().map(this::toResponse).toList();
     }
 
     @GetMapping("/{id}")
@@ -35,22 +40,49 @@ public class EvaluacionController {
             @ApiResponse(responseCode = "200", description = "OK"),
             @ApiResponse(responseCode = "404", description = "No encontrada")
     })
-    public Evaluacion get(@Parameter(description = "ID de la evaluación")
-                          @PathVariable Long id) {
-        return repo.findById(id).orElseThrow();
+    public EvaluacionResponse get(@Parameter(description = "ID de la evaluación")
+                                  @PathVariable Long id) {
+        return repo.findById(id).map(this::toResponse).orElseThrow();
     }
 
     @GetMapping("/programa/{programaId}")
     @Operation(summary = "Listar evaluaciones por programa")
-    public List<Evaluacion> porPrograma(@Parameter(description = "ID del programa")
-                                        @PathVariable Long programaId) {
-        return repo.findByProgramaId(programaId);
+    public List<EvaluacionResponse> porPrograma(@Parameter(description = "ID del programa")
+                                                @PathVariable Long programaId) {
+        return repo.findByProgramaId(programaId).stream().map(this::toResponse).toList();
     }
 
     @GetMapping("/participante/{participanteId}")
     @Operation(summary = "Listar evaluaciones por participante")
-    public List<Evaluacion> porParticipante(@Parameter(description = "ID del participante")
-                                            @PathVariable Long participanteId) {
-        return repo.findByParticipanteId(participanteId);
+    public List<EvaluacionResponse> porParticipante(@Parameter(description = "ID del participante")
+                                                    @PathVariable Long participanteId) {
+        return repo.findByParticipanteId(participanteId).stream().map(this::toResponse).toList();
+    }
+
+    // ---- helpers ----
+    private EvaluacionResponse toResponse(Evaluacion e) {
+        return new EvaluacionResponse(
+                e.getId(),
+                e.getFecha(),
+                e.getPuntaje(),
+                e.getObservaciones(),
+                toParticipanteResponse(e.getParticipante()),
+                toProgramaResponse(e.getPrograma())
+        );
+    }
+
+    private ParticipanteResponse toParticipanteResponse(Participante p) {
+        return new ParticipanteResponse(
+                p.getId(), p.getNombre(), p.getEmail(), p.getGenero(),
+                p.getNivelEducativo(), p.getIngresoFormal()
+        );
+    }
+
+    private ProgramaResponse toProgramaResponse(Programa pr) {
+        return new ProgramaResponse(
+                pr.getId(), pr.getNombre(), pr.getEnfoque(), pr.getDuracion(),
+                pr.getInstitucion(),
+                pr.getConsultor() != null ? pr.getConsultor().getId() : null
+        );
     }
 }

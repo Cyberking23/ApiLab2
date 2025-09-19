@@ -3,6 +3,7 @@ package org.example.apilab2.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.apilab2.controller.request.ConsultorCreateRequest;
+import org.example.apilab2.controller.response.ConsultorResponse;
 import org.example.apilab2.repository.ConsultorRepository;
 import org.example.apilab2.repository.domain.Consultor;
 import org.example.apilab2.service.ConsultorService;
@@ -33,12 +34,19 @@ public class ConsultorController {
             @ApiResponse(responseCode = "201", description = "Consultor creado"),
             @ApiResponse(responseCode = "400", description = "Datos inválidos")
     })
-    public Consultor crear(@Valid @RequestBody ConsultorCreateRequest req) {
-        return service.crear(req.nombre(), req.especializacion(), req.inActivoActualizado());
+    public ConsultorResponse crear(@Valid @RequestBody ConsultorCreateRequest req) {
+        Consultor c = service.crear(req.nombre(), req.especializacion(), req.inActivoActualizado());
+        return toResponse(c);
     }
 
     @GetMapping
     @Operation(summary = "Listar consultores", description = "Devuelve todos los consultores")
     @ApiResponses(@ApiResponse(responseCode = "200", description = "OK"))
-    public List<Consultor> listar() { return repo.findAll(); }
+    public List<ConsultorResponse> listar() {
+        return repo.findAll().stream().map(this::toResponse).toList();
+    }
+
+    private ConsultorResponse toResponse(Consultor c) {
+        return new ConsultorResponse(c.getId(), c.getNombre(), c.getEspecializacion(), c.getInActivoActualizado());
+    }
 }

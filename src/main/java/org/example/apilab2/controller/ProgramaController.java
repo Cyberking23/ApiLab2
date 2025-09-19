@@ -4,9 +4,13 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.apilab2.controller.request.EvaluacionCreateRequest;
 import org.example.apilab2.controller.request.ProgramaCreateRequest;
+import org.example.apilab2.controller.response.EvaluacionResponse;
 import org.example.apilab2.controller.response.ImpactoProgramaResponse;
+import org.example.apilab2.controller.response.ParticipanteResponse;
+import org.example.apilab2.controller.response.ProgramaResponse;
 import org.example.apilab2.repository.ProgramaRepository;
 import org.example.apilab2.repository.domain.Evaluacion;
+import org.example.apilab2.repository.domain.Participante;
 import org.example.apilab2.repository.domain.Programa;
 import org.example.apilab2.service.EvaluacionService;
 import org.example.apilab2.service.ProgramaService;
@@ -36,8 +40,9 @@ public class ProgramaController {
             @ApiResponse(responseCode = "201", description = "Programa creado"),
             @ApiResponse(responseCode = "400", description = "Datos inválidos")
     })
-    public Programa crear(@Valid @RequestBody ProgramaCreateRequest req){
-        return programaService.crear(req.nombre(), req.enfoque(), req.duracion(), req.institucion(), req.consultorId());
+    public ProgramaResponse crear(@Valid @RequestBody ProgramaCreateRequest req){
+        Programa p = programaService.crear(req.nombre(), req.enfoque(), req.duracion(), req.institucion(), req.consultorId());
+        return toProgramaResponse(p);
     }
 
     @GetMapping("/{id}")
@@ -46,9 +51,10 @@ public class ProgramaController {
             @ApiResponse(responseCode = "200", description = "OK"),
             @ApiResponse(responseCode = "404", description = "No encontrado")
     })
-    public Programa get(@Parameter(description = "ID del programa")
-                        @PathVariable Long id){
-        return programaRepo.findById(id).orElseThrow();
+    public ProgramaResponse get(@Parameter(description = "ID del programa")
+                                @PathVariable Long id){
+        Programa p = programaRepo.findById(id).orElseThrow();
+        return toProgramaResponse(p);
     }
 
     @PostMapping("/{programaId}/inscripciones/{participanteId}")
@@ -57,9 +63,10 @@ public class ProgramaController {
             @ApiResponse(responseCode = "200", description = "Inscripción realizada"),
             @ApiResponse(responseCode = "404", description = "No encontrado")
     })
-    public Programa inscribir(@Parameter(description = "ID del programa") @PathVariable Long programaId,
-                              @Parameter(description = "ID del participante") @PathVariable Long participanteId){
-        return programaService.inscribirParticipante(programaId, participanteId);
+    public ProgramaResponse inscribir(@Parameter(description = "ID del programa") @PathVariable Long programaId,
+                                      @Parameter(description = "ID del participante") @PathVariable Long participanteId){
+        Programa p = programaService.inscribirParticipante(programaId, participanteId);
+        return toProgramaResponse(p);
     }
 
     @PostMapping("/{programaId}/evaluaciones")
@@ -70,9 +77,29 @@ public class ProgramaController {
             @ApiResponse(responseCode = "404", description = "No encontrado"),
             @ApiResponse(responseCode = "400", description = "Datos inválidos")
     })
-    public Evaluacion evaluar(@Parameter(description = "ID del programa") @PathVariable Long programaId,
-                              @Valid @RequestBody EvaluacionCreateRequest req){
-        return evaluacionService.crear(programaId, req.participanteId(), req.fecha(), req.puntaje(), req.observaciones());
+    public EvaluacionResponse evaluar(@Parameter(description = "ID del programa") @PathVariable Long programaId,
+                                      @Valid @RequestBody EvaluacionCreateRequest req){
+        Evaluacion e = evaluacionService.crear(programaId, req.participanteId(), req.fecha(), req.puntaje(), req.observaciones());
+        // Reuso del helper de EvaluacionController si lo extraes a un componente; aquí lo rearmo rápido:
+        return new EvaluacionResponse(
+                e.getId(), e.getFecha(), e.getPuntaje(), e.getObservaciones(),
+                new ParticipanteResponse(
+                        e.getParticipante().getId(),
+                        e.getParticipante().getNombre(),
+                        e.getParticipante().getEmail(),
+                        e.getParticipante().getGenero(),
+                        e.getParticipante().getNivelEducativo(),
+                        e.getParticipante().getIngresoFormal()
+                ),
+                new ProgramaResponse(
+                        e.getPrograma().getId(),
+                        e.getPrograma().getNombre(),
+                        e.getPrograma().getEnfoque(),
+                        e.getPrograma().getDuracion(),
+                        e.getPrograma().getInstitucion(),
+                        e.getPrograma().getConsultor() != null ? e.getPrograma().getConsultor().getId() : null
+                )
+        );
     }
 
     @GetMapping("/{programaId}/impacto")
@@ -80,5 +107,13 @@ public class ProgramaController {
     @ApiResponses(@ApiResponse(responseCode = "200", description = "OK"))
     public ImpactoProgramaResponse impacto(@Parameter(description = "ID del programa") @PathVariable Long programaId){
         return evaluacionService.impacto(programaId);
+    }
+
+    private ProgramaResponse toProgramaResponse(Programa pr) {
+        return new ProgramaResponse(
+                pr.getId(), pr.getNombre(), pr.getEnfoque(), pr.getDuracion(),
+                pr.getInstitucion(),
+                pr.getConsultor() != null ? pr.getConsultor().getId() : null
+        );
     }
 }
