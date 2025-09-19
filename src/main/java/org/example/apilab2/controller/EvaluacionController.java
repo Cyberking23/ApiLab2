@@ -7,30 +7,50 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+// OpenAPI
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/evaluaciones")
+@Tag(name = "Evaluaciones", description = "Consulta de evaluaciones")
 public class EvaluacionController {
 
     private final EvaluacionRepository repo;
 
     @GetMapping
+    @Operation(summary = "Listar evaluaciones")
+    @ApiResponses(@ApiResponse(responseCode = "200", description = "OK"))
     public List<Evaluacion> listar() {
         return repo.findAll();
     }
 
     @GetMapping("/{id}")
-    public Evaluacion get(@PathVariable Long id) {
+    @Operation(summary = "Obtener evaluación por ID")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "OK"),
+            @ApiResponse(responseCode = "404", description = "No encontrada")
+    })
+    public Evaluacion get(@Parameter(description = "ID de la evaluación")
+                          @PathVariable Long id) {
         return repo.findById(id).orElseThrow();
     }
 
     @GetMapping("/programa/{programaId}")
-    public List<Evaluacion> porPrograma(@PathVariable Long programaId) {
+    @Operation(summary = "Listar evaluaciones por programa")
+    public List<Evaluacion> porPrograma(@Parameter(description = "ID del programa")
+                                        @PathVariable Long programaId) {
         return repo.findByProgramaId(programaId);
     }
 
     @GetMapping("/participante/{participanteId}")
-    public List<Evaluacion> porParticipante(@PathVariable Long participanteId) {
+    @Operation(summary = "Listar evaluaciones por participante")
+    public List<Evaluacion> porParticipante(@Parameter(description = "ID del participante")
+                                            @PathVariable Long participanteId) {
         return repo.findByParticipanteId(participanteId);
     }
 }
