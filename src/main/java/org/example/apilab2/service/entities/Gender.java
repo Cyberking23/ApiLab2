@@ -1,0 +1,1 @@
+package org.example.apilab2.service.entities; public enum Gender { MALE, FEMALE, OTHER }
