@@ -1,9 +1,14 @@
+
 package org.example.apilab2.service;
-import org.example.apilab2.controller.response.ImpactoProgramaResponse;
-import java.time.LocalDate;
-import org.example.apilab2.repository.domain.Evaluacion;
+
+import org.example.apilab2.service.dtos.EvaluacionDto;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface EvaluacionService {
-    Evaluacion crear(Long programaId, Long participanteId, LocalDate fecha, Double puntaje, String obs);
-    ImpactoProgramaResponse impacto(Long programaId);
+    EvaluacionDto crear(EvaluacionDto dto);
+    EvaluacionDto obtener(Long id);
+    Page<EvaluacionDto> listar(Long participanteId, Pageable pageable);
+    EvaluacionDto actualizar(Long id, EvaluacionDto dto);
+    void eliminar(Long id);
 }

@@ -1,88 +1,35 @@
+
 package org.example.apilab2.controller;
 
-import lombok.RequiredArgsConstructor;
-import org.example.apilab2.controller.response.EvaluacionResponse;
-import org.example.apilab2.controller.response.ParticipanteResponse;
-import org.example.apilab2.controller.response.ProgramaResponse;
-import org.example.apilab2.repository.EvaluacionRepository;
-import org.example.apilab2.repository.domain.Evaluacion;
-import org.example.apilab2.repository.domain.Participante;
-import org.example.apilab2.repository.domain.Programa;
+import org.example.apilab2.service.EvaluacionService;
+import org.example.apilab2.service.dtos.EvaluacionDto;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
-// OpenAPI
-import io.swagger.v3.oas.annotations.tags.Tag;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-
 @RestController
-@RequiredArgsConstructor
-@RequestMapping("/api/evaluaciones")
-@Tag(name = "Evaluaciones", description = "Consulta de evaluaciones")
+@RequestMapping("/api/v1/evaluaciones")
 public class EvaluacionController {
 
-    private final EvaluacionRepository repo;
+    private final EvaluacionService service;
+    public EvaluacionController(EvaluacionService service) { this.service = service; }
 
-    @GetMapping
-    @Operation(summary = "Listar evaluaciones")
-    @ApiResponses(@ApiResponse(responseCode = "200", description = "OK"))
-    public List<EvaluacionResponse> listar() {
-        return repo.findAll().stream().map(this::toResponse).toList();
-    }
+    @PostMapping
+    public EvaluacionDto crear(@RequestBody EvaluacionDto dto) { return service.crear(dto); }
 
     @GetMapping("/{id}")
-    @Operation(summary = "Obtener evaluación por ID")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "OK"),
-            @ApiResponse(responseCode = "404", description = "No encontrada")
-    })
-    public EvaluacionResponse get(@Parameter(description = "ID de la evaluación")
-                                  @PathVariable Long id) {
-        return repo.findById(id).map(this::toResponse).orElseThrow();
+    public EvaluacionDto obtener(@PathVariable Long id) { return service.obtener(id); }
+
+    @GetMapping
+    public Page<EvaluacionDto> listar(@RequestParam(required = false) Long participanteId, Pageable pageable) {
+        return service.listar(participanteId, pageable);
     }
 
-    @GetMapping("/programa/{programaId}")
-    @Operation(summary = "Listar evaluaciones por programa")
-    public List<EvaluacionResponse> porPrograma(@Parameter(description = "ID del programa")
-                                                @PathVariable Long programaId) {
-        return repo.findByProgramaId(programaId).stream().map(this::toResponse).toList();
+    @PutMapping("/{id}")
+    public EvaluacionDto actualizar(@PathVariable Long id, @RequestBody EvaluacionDto dto) {
+        return service.actualizar(id, dto);
     }
 
-    @GetMapping("/participante/{participanteId}")
-    @Operation(summary = "Listar evaluaciones por participante")
-    public List<EvaluacionResponse> porParticipante(@Parameter(description = "ID del participante")
-                                                    @PathVariable Long participanteId) {
-        return repo.findByParticipanteId(participanteId).stream().map(this::toResponse).toList();
-    }
-
-    // ---- helpers ----
-    private EvaluacionResponse toResponse(Evaluacion e) {
-        return new EvaluacionResponse(
-                e.getId(),
-                e.getFecha(),
-                e.getPuntaje(),
-                e.getObservaciones(),
-                toParticipanteResponse(e.getParticipante()),
-                toProgramaResponse(e.getPrograma())
-        );
-    }
-
-    private ParticipanteResponse toParticipanteResponse(Participante p) {
-        return new ParticipanteResponse(
-                p.getId(), p.getNombre(), p.getEmail(), p.getGenero(),
-                p.getNivelEducativo(), p.getIngresoFormal()
-        );
-    }
-
-    private ProgramaResponse toProgramaResponse(Programa pr) {
-        return new ProgramaResponse(
-                pr.getId(), pr.getNombre(), pr.getEnfoque(), pr.getDuracion(),
-                pr.getInstitucion(),
-                pr.getConsultor() != null ? pr.getConsultor().getId() : null
-        );
-    }
+    @DeleteMapping("/{id}")
+    public void eliminar(@PathVariable Long id) { service.eliminar(id); }
 }
